@@ -1,0 +1,208 @@
+﻿@page
+@model IndexModel
+@{
+    ViewData["Title"] = "Healthcare Monitoring Dashboard";
+}
+
+<div class="text-center">
+    <h1 class="display-4">Healthcare Monitoring Dashboard</h1>
+    <p>Real-time analytics for patient health data</p>
+</div>
+
+<div class="row">
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-header">
+                <h2>Patient Vitals</h2>
+            </div>
+            <div class="card-body">
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>Metric</th>
+                            <th>Value</th>
+                        </tr>
+                    </thead>
+                    <tbody id="patientVitalsTable">
+                        <tr>
+                            <td>Heart Rate</td>
+                            <td id="heartRate">--</td>
+                        </tr>
+                        <tr>
+                            <td>Blood Pressure</td>
+                            <td id="bloodPressure">--</td>
+                        </tr>
+                        <tr>
+                            <td>Temperature</td>
+                            <td id="temperature">--</td>
+                        </tr>
+                        <tr>
+                            <td>Oxygen Saturation</td>
+                            <td id="oxygenSaturation">--</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-header">
+                <h2>Alerts</h2>
+            </div>
+            <div class="card-body">
+                <ul id="alertsList" class="list-group">
+                    <!-- Alerts will be dynamically added here -->
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-header">
+                <h2>Patient Statistics</h2>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-6">
+                        <p>Total Patients</p>
+                        <p id="totalPatients" class="h3">--</p>
+                    </div>
+                    <div class="col-6">
+                        <p>Critical Patients</p>
+                        <p id="criticalPatients" class="h3 text-danger">--</p>
+                    </div>
+                    <div class="col-6">
+                        <p>Avg. Heart Rate</p>
+                        <p id="avgHeartRate" class="h3">--</p>
+                    </div>
+                    <div class="col-6">
+                        <p>Avg. Temperature</p>
+                        <p id="avgTemperature" class="h3">--</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row mt-4">
+    <div class="col-md-12">
+        <div class="card">
+            <div class="card-header">
+                <h2>Heart Rate Trend</h2>
+            </div>
+            <div class="card-body">
+                <canvas id="heartRateChart"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        // Simulated data and update functions
+        let patientData = {
+            heartRate: 75,
+            bloodPressure: "120/80",
+            temperature: 37.0,
+            oxygenSaturation: 98,
+            totalPatients: 100,
+            criticalPatients: 5,
+            avgHeartRate: 72,
+            avgTemperature: 36.8
+        };
+
+        let heartRateHistory = Array(20).fill(75);
+
+        function updateVitals() {
+            document.getElementById("heartRate").textContent = patientData.heartRate;
+            document.getElementById("bloodPressure").textContent = patientData.bloodPressure;
+            document.getElementById("temperature").textContent = patientData.temperature.toFixed(1) + "°C";
+            document.getElementById("oxygenSaturation").textContent = patientData.oxygenSaturation + "%";
+        }
+
+        function updateStats() {
+            document.getElementById("totalPatients").textContent = patientData.totalPatients;
+            document.getElementById("criticalPatients").textContent = patientData.criticalPatients;
+            document.getElementById("avgHeartRate").textContent = patientData.avgHeartRate;
+            document.getElementById("avgTemperature").textContent = patientData.avgTemperature.toFixed(1) + "°C";
+        }
+
+        function addAlert(message) {
+            const alertsList = document.getElementById("alertsList");
+            const alertItem = document.createElement("li");
+            alertItem.className = "list-group-item list-group-item-danger";
+            alertItem.textContent = message;
+            alertsList.prepend(alertItem);
+
+            // Remove oldest alert if more than 5
+            if (alertsList.children.length > 5) {
+                alertsList.removeChild(alertsList.lastChild);
+            }
+        }
+
+        // Initialize Chart.js
+        const ctx = document.getElementById('heartRateChart').getContext('2d');
+        const heartRateChart = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: Array(20).fill(''),
+                datasets: [{
+                    label: 'Heart Rate',
+                    data: heartRateHistory,
+                    borderColor: 'rgb(75, 192, 192)',
+                    tension: 0.1
+                }]
+            },
+            options: {
+                responsive: true,
+                scales: {
+                    y: {
+                        beginAtZero: false,
+                        suggestedMin: 50,
+                        suggestedMax: 100
+                    }
+                }
+            }
+        });
+
+        function updateChart() {
+            heartRateHistory.push(patientData.heartRate);
+            heartRateHistory.shift();
+            heartRateChart.data.datasets[0].data = heartRateHistory;
+            heartRateChart.update();
+        }
+
+        // Simulate real-time updates
+        setInterval(() => {
+            // Update patient vitals
+            patientData.heartRate = Math.floor(70 + Math.random() * 30);
+            patientData.bloodPressure = `${110 + Math.floor(Math.random() * 30)}/${70 + Math.floor(Math.random() * 20)}`;
+            patientData.temperature = 36.5 + Math.random();
+            patientData.oxygenSaturation = Math.floor(95 + Math.random() * 5);
+
+            // Update patient stats
+            patientData.totalPatients = Math.floor(95 + Math.random() * 10);
+            patientData.criticalPatients = Math.floor(3 + Math.random() * 5);
+            patientData.avgHeartRate = Math.floor(70 + Math.random() * 10);
+            patientData.avgTemperature = 36.5 + Math.random() * 0.5;
+
+            updateVitals();
+            updateStats();
+            updateChart();
+
+            // Simulate alerts
+            if (Math.random() < 0.1) {
+                addAlert(`Alert: Patient ${Math.floor(Math.random() * 1000)} showing irregular heart rhythm.`);
+            }
+        }, 2000);
+
+        // Initial update
+        updateVitals();
+        updateStats();
+    </script>
+}
